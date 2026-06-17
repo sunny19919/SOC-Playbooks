@@ -13,3 +13,9 @@ DeviceFileEvents
 | where FolderPath has "easy-day-js" or FolderPath has "@mastra"
 | where FileName == "package.json"
 | project Timestamp, DeviceName, FolderPath, InitiatingProcessFileName
+
+
+DeviceProcessEvents
+| where ProcessCommandLine has_any ("@mastra", "create-mastra", "easy-day-js")
+| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine
+| order by Timestamp desc
