@@ -20,7 +20,7 @@ DeviceProcessEvents
 | project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine
 | order by Timestamp desc
 
-
+Hunt for Mastra package usage across all devices in the last 30 days"
 DeviceProcessEvents
 | where ProcessCommandLine has_any (
     "@mastra", 
