@@ -1,0 +1,15 @@
+DeviceNetworkEvents
+| where RemoteIP in ("23.254.164.92", "23.254.164.123")
+| project Timestamp, DeviceName, AccountName, RemoteIP, RemotePort,
+          InitiatingProcessFileName, InitiatingProcessCommandLine
+
+DeviceNetworkEvents
+| where RemoteUrl has "23.254.164.92:8000/update/49890878"
+   or RemoteUrl has "23.254.164.92"
+| project Timestamp, DeviceName, RemoteUrl, InitiatingProcessFileName, InitiatingProcessCommandLine
+
+DeviceFileEvents
+| where FolderPath has "node_modules"
+| where FolderPath has "easy-day-js" or FolderPath has "@mastra"
+| where FileName == "package.json"
+| project Timestamp, DeviceName, FolderPath, InitiatingProcessFileName
