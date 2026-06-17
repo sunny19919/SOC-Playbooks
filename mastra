@@ -32,3 +32,5 @@ DeviceProcessEvents
 )
 | summarize FirstSeen = min(Timestamp), LastSeen = max(Timestamp) by DeviceName, AccountName
 | order by LastSeen desc
+
+I have checked and I don't Mastra is being  used in our environment so we are not impacted by the @mastra npm supply chain attack.
