@@ -1,0 +1,116 @@
+// THREAT HUNT: Mastra npm Scope Takeover - easy-day-js Dropper
+// Ref: MSC-2026-6172 / MSC-2026-6173
+// Date: June 17, 2026
+// Source: https://www.mend.io/blog/mastra-npm-scope-takeover-easy-day-js/
+// =============================================================
+// HOW TO USE:
+// Run each query independently in Microsoft Defender Advanced Hunting
+// Adjust 'timeframe' variable as needed (default: 30 days)
+// Any results should be investigated as potential compromise
+// =============================================================
+
+// -------------------------------------------------------
+// QUERY 1: C2 Network Connections (Highest Confidence)
+// Detects direct connections to attacker infrastructure
+// -------------------------------------------------------
+let timeframe = 30d;
+DeviceNetworkEvents
+| where Timestamp > ago(timeframe)
+| where RemoteIP in ("23.254.164.92", "23.254.164.123")
+| project Timestamp, DeviceName, AccountName = InitiatingProcessAccountName,
+          RemoteIP, RemotePort, RemoteUrl,
+          InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp desc
+
+// -------------------------------------------------------
+// QUERY 2: Malicious Package on Disk
+// Detects if easy-day-js or @mastra was installed on any endpoint
+// -------------------------------------------------------
+let timeframe = 30d;
+DeviceFileEvents
+| where Timestamp > ago(timeframe)
+| where FolderPath has_any ("easy-day-js", "@mastra")
+| project Timestamp, DeviceName, ActionType,
+          FolderPath, FileName,
+          InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp desc
+
+// -------------------------------------------------------
+// QUERY 3: Dropper Execution via npm postinstall
+// Detects npm spawning node to execute a .cjs file (postinstall hook)
+// -------------------------------------------------------
+let timeframe = 30d;
+DeviceProcessEvents
+| where Timestamp > ago(timeframe)
+| where InitiatingProcessFileName in~ ("npm", "npm.cmd")
+| where FileName in~ ("node.exe", "node")
+| where ProcessCommandLine has ".cjs"
+| project Timestamp, DeviceName, AccountName = InitiatingProcessAccountName,
+          ProcessCommandLine, InitiatingProcessFileName,
+          InitiatingProcessCommandLine
+| order by Timestamp desc
+
+// -------------------------------------------------------
+// QUERY 4: Payload Dropped in Temp Directory by Node
+// Detects the 24-hex-char .js second-stage payload written to temp
+// Excludes known browser/installer false positives
+// -------------------------------------------------------
+let timeframe = 30d;
+DeviceFileEvents
+| where Timestamp > ago(timeframe)
+| where ActionType == "FileCreated"
+| where FileName matches regex @"^[0-9a-f]{24}\.js$"
+| where FolderPath has_any ("\\Temp\\", "/tmp/", "AppData\\Local\\Temp", "/var/folders/")
+| where InitiatingProcessFileName in~ ("node.exe", "node", "npm", "npm.cmd")
+| project Timestamp, DeviceName, ActionType,
+          FolderPath, FileName,
+          InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp desc
+
+// -------------------------------------------------------
+// QUERY 5: Persistence Artifacts
+// Detects malware establishing reboot persistence across Windows/macOS/Linux
+// -------------------------------------------------------
+let timeframe = 30d;
+DeviceFileEvents
+| where Timestamp > ago(timeframe)
+| where FolderPath has "ProgramData\\NodePackages"
+    or (FolderPath has "LaunchAgents" and FileName has "protocal")
+    or (FolderPath has "systemd" and FileName has "nvmconf")
+| project Timestamp, DeviceName, ActionType,
+          FolderPath, FileName,
+          InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp desc
+
+// -------------------------------------------------------
+// QUERY 6: SUMMARY - Full Campaign Exposure Check
+// Run this first for a quick yes/no on exposure
+// No results = not applicable to your environment
+// -------------------------------------------------------
+let timeframe = 30d;
+let pkg_on_disk = DeviceFileEvents
+    | where Timestamp > ago(timeframe)
+    | where FolderPath has_any ("@mastra", "easy-day-js")
+    | summarize Evidence="Package on disk",
+                Count=count(),
+                Devices=make_set(DeviceName),
+                LastSeen=max(Timestamp);
+let npm_process = DeviceProcessEvents
+    | where Timestamp > ago(timeframe)
+    | where ProcessCommandLine has_any ("@mastra", "mastra", "easy-day-js")
+    | summarize Evidence="npm/node process",
+                Count=count(),
+                Devices=make_set(DeviceName),
+                LastSeen=max(Timestamp);
+let c2_network = DeviceNetworkEvents
+    | where Timestamp > ago(timeframe)
+    | where RemoteIP in ("23.254.164.92", "23.254.164.123")
+    | summarize Evidence="C2 connection",
+                Count=count(),
+                Devices=make_set(DeviceName),
+                LastSeen=max(Timestamp);
+pkg_on_disk
+| union npm_process
+| union c2_network
+| project Evidence, Count, LastSeen, Devices
+| order by LastSeen desc
