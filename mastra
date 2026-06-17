@@ -19,3 +19,9 @@ DeviceProcessEvents
 | where ProcessCommandLine has_any ("@mastra", "create-mastra", "easy-day-js")
 | project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine
 | order by Timestamp desc
+
+
+DeviceProcessEvents
+| where ProcessCommandLine has_any ("@mastra", "create-mastra", "mastra@latest", "mastra dev", "mastra build")
+| summarize FirstSeen = min(Timestamp), LastSeen = max(Timestamp) by DeviceName, AccountName
+| order by LastSeen desc
