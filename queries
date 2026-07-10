@@ -1,0 +1,49 @@
+let iocIPs = dynamic(["67.190.46.128", "139.28.38.129", "185.174.101.1", "45.82.84.29"]);
+EntraIdSignInEvents
+| where Timestamp > ago(30d)
+| where IPAddress in (iocIPs)
+| project Timestamp, AccountUpn, IPAddress, Application, ResourceDisplayName, ErrorCode, UserAgent
+| union (
+    DeviceNetworkEvents
+    | where Timestamp > ago(60d)
+    | where RemoteIP in (iocIPs)
+    | project Timestamp, DeviceName, RemoteIP, RemoteUrl, InitiatingProcessFileName, InitiatingProcessAccountName
+)
+
+
+let iocDomains = dynamic([
+    "logfriend.com",
+    "xoday.sbs",
+    "ructus.site",
+    "incogxray.sbs",
+    "briggselectrlc.co",
+    "manlivep.org"
+]);
+DeviceNetworkEvents
+| where Timestamp > ago(30d)
+| where RemoteUrl has_any (iocDomains)
+| project Timestamp, DeviceName, RemoteUrl, RemoteIP, InitiatingProcessFileName, InitiatingProcessAccountName
+| union (
+    UrlClickEvents
+    | where Timestamp > ago(30d)
+    | where Url has_any (iocDomains)
+    | project Timestamp, AccountUpn, Url, ActionType, NetworkMessageId
+)
+
+UrlClickEvents
+| where Timestamp > ago(30d)
+| where Url has ".pages.dev"
+| where Url has_any ("critical-silver-yak", "shy-crimson-wren", "device", "verify", "login")
+| project Timestamp, AccountUpn, Url, ActionType, ThreatTypes
+
+
+
+EmailUrlInfo
+
+| where Timestamp > ago(30d)
+
+| where UrlDomain endswith "pages.dev"
+
+| join kind=inner (EmailEvents | where Timestamp > ago(30d)) on NetworkMessageId
+
+| project Timestamp, SenderFromAddress, RecipientEmailAddress, UrlDomain, Url, ThreatTypes, DeliveryAction
