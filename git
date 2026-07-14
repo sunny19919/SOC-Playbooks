@@ -11,6 +11,8 @@ New-NetQosPolicy -Name "policy-name" `
 
 https://github.com/SlimKQL/Detections.AI/blob/main/KQL/edrchoker-detection.kql#L1
 
+EDRChoker is a publicly disclosed red-team tool that uses Windows' Policy-based QoS (pacer.sys) to throttle EDR agent processes down to as low as 8 bits per second, causing their connections to the server to consistently time out and effectively isolating the agent. It operates at the NDIS layer, below where Windows Firewall/WFP-based blocking works, and the created QoS policies persist across reboots.
+
 
 MsMpEng.exe
 MpDefenderCoreService.exe
