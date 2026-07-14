@@ -39,3 +39,29 @@ SenseIR.exe
 SenseNdr.exe
 SenseCncProxy.exe
 SenseSampleUploader.exe 
+
+
+
+let LookBack = 1h;
+let SuspectedChoker =
+    DeviceFileEvents
+    | where Timestamp > ago(LookBack)
+    | where ActionType == "FileCreated"
+    | where FileName endswith ".exe"
+    | where InitiatingProcessAccountName !~ "system"
+    | distinct FileName, SHA1
+    | invoke FileProfile(SHA1)
+    | where ProfileAvailability == "Available"
+    | where SignatureState != "SignedValid"
+    | project FileName, SHA1;
+let SuspectedDevice =
+    DeviceProcessEvents
+    | where Timestamp > ago(LookBack)
+    | where ProcessCommandLine has " "
+    | where InitiatingProcessFileName =~ "cmd.exe"
+    | join kind=inner SuspectedChoker on FileName, SHA1
+    | distinct DeviceName;
+DeviceInfo
+| where Timestamp > ago(LookBack)
+| where SensorHealthState == "Inactive"
+| where DeviceName in (SuspectedDevice)
