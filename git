@@ -10,3 +10,30 @@ New-NetQosPolicy -Name "policy-name" `
 
 
 https://github.com/SlimKQL/Detections.AI/blob/main/KQL/edrchoker-detection.kql#L1
+
+
+MsMpEng.exe
+MpDefenderCoreService.exe
+NisSrv.exe
+MpCmdRun.exe
+MsMpEngCP.exe
+MsSense.exe
+SenseIR.exe
+SenseNdr.exe
+SenseCncProxy.exe
+SenseSampleUploader.exe
+SenseCM.exe
+SenseTVM.exe
+SecurityHealthService.exe
+SecurityHealthSystray.exe
+
+
+jo us list file me hai 
+
+MpDefenderCoreService.exe 
+MsMpEng.exe 
+MsSense.exe 
+SenseIR.exe 
+SenseNdr.exe
+SenseCncProxy.exe
+SenseSampleUploader.exe 
