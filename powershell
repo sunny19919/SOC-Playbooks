@@ -1,0 +1,24 @@
+param (
+    [Parameter(Mandatory=$true)]
+    [int]$Port
+)
+
+Write-Output "=== Connections on Port $Port ==="
+
+$connections = Get-NetTCPConnection | Where-Object { $_.LocalPort -eq $Port -or $_.RemotePort -eq $Port }
+
+if (-not $connections) {
+    Write-Output "No connections found on port $Port"
+    exit
+}
+
+foreach ($conn in $connections) {
+    $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
+    Write-Output "---"
+    Write-Output "PID          : $($conn.OwningProcess)"
+    Write-Output "App Name     : $($proc.Name)"
+    Write-Output "App Path     : $($proc.Path)"
+    Write-Output "Local        : $($conn.LocalAddress):$($conn.LocalPort)"
+    Write-Output "Remote       : $($conn.RemoteAddress):$($conn.RemotePort)"
+    Write-Output "State        : $($conn.State)"
+}
