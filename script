@@ -1,0 +1,58 @@
+# Get-PortOwner.ps1
+# Defender alert triage - find which process owns a given port.
+# Live Response: run Get-PortOwner.ps1 -parameters "-LocalPort 34456 -Protocol TCP"
+
+param(
+    [ValidateRange(1,65535)][int]$LocalPort,
+    [ValidateRange(1,65535)][int]$RemotePort,
+    [ValidateSet('TCP','UDP')][string]$Protocol
+)
+
+# --- input validation ---
+if (-not $LocalPort -and -not $RemotePort) {
+    Write-Error "Need -LocalPort or -RemotePort."
+    return
+}
+if ($RemotePort -and $Protocol -eq 'UDP') {
+    Write-Error "Invalid combo: UDP endpoints have no remote port. Use -LocalPort for UDP, or drop -Protocol UDP."
+    return
+}
+# remote port only makes sense for TCP, so lock it in
+if ($RemotePort -and -not $Protocol) { $Protocol = 'TCP' }
+
+$conns = @()
+
+# --- TCP ---
+if ($Protocol -ne 'UDP') {
+    $tcp = Get-NetTCPConnection -ErrorAction SilentlyContinue
+    if ($LocalPort)  { $tcp = $tcp | Where-Object LocalPort  -eq $LocalPort }
+    if ($RemotePort) { $tcp = $tcp | Where-Object RemotePort -eq $RemotePort }
+    $conns += @($tcp)
+}
+
+# --- UDP (local port match only) ---
+if ($Protocol -ne 'TCP' -and $LocalPort) {
+    $conns += @(Get-NetUDPEndpoint -LocalPort $LocalPort -ErrorAction SilentlyContinue)
+}
+
+if (-not $conns) {
+    Write-Warning "Nothing on that port right now - check Defender timeline for historical hits."
+    return
+}
+
+# --- resolve owning process ---
+$conns | ForEach-Object {
+    $p = Get-CimInstance Win32_Process -Filter "ProcessId=$($_.OwningProcess)" -ErrorAction SilentlyContinue
+    $svc = if ($p.Name -eq 'svchost.exe') { (Get-CimInstance Win32_Service -Filter "ProcessId=$($p.ProcessId)").Name -join ',' }
+    [pscustomobject]@{
+        Proto      = if ($_.PSObject.Properties['State']) { 'TCP' } else { 'UDP' }
+        LocalAddr  = $_.LocalAddress
+        LocalPort  = $_.LocalPort
+        RemoteAddr = $_.RemoteAddress
+        State      = $_.State
+        PID        = $_.OwningProcess
+        Process    = if ($p) { $p.Name } else { '<exited>' }
+        Service    = $svc
+        Path       = $p.ExecutablePath
+    }
+} | Format-List
