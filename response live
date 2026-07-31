@@ -1,0 +1,1 @@
+"Isolate the device from the network and investigate the origin and scope of the compromise. Collect and document relevant incident artifacts/evidence using Live Response (Ref: Live response in Microsoft Defender for Endpoint). Update IOCs and engage Microsoft and/or Mandiant for additional support if required."
