@@ -13,3 +13,25 @@ DeviceFileEvents
     strcat("https://microsoftedge.microsoft.com/addons/detail/", ExtensionId),
     strcat("https://chromewebstore.google.com/detail/", ExtensionId))
 | order by InstallTime desc
+
+
+
+DeviceFileEvents
+| where Timestamp > ago(6h)
+| where FileName endswith ".crx"
+| extend ExtensionId = tostring(extract(@"^([a-p]{32})", 1, FileName))
+| where isnotempty(ExtensionId)
+| extend Browser = case(
+    InitiatingProcessFileName =~ "msedge.exe", "Edge",
+    InitiatingProcessFileName =~ "chrome.exe", "Chrome",
+    InitiatingProcessFileName)
+| summarize InstallTime = min(Timestamp)
+    by DeviceName, User = InitiatingProcessAccountName, Browser, ExtensionId
+| join kind=leftouter (
+    DeviceTvmBrowserExtensionsKB
+    | summarize ExtensionName = max(ExtensionName), ExtensionRisk = max(ExtensionRisk)
+        by ExtensionId
+  ) on ExtensionId
+| extend ExtensionName = coalesce(ExtensionName, "unknown - check store")
+| project InstallTime, DeviceName, User, Browser, ExtensionName, ExtensionId, ExtensionRisk
+| order by InstallTime desc
