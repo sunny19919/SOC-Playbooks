@@ -1,0 +1,64 @@
+let AlreadyInstalled =
+    DeviceTvmBrowserExtensions
+    | distinct DeviceId, ExtensionId;
+let Catalogue =
+    DeviceTvmBrowserExtensionsKB
+    | summarize ExtensionName        = max(ExtensionName),
+                ExtensionRisk        = max(ExtensionRisk),
+                ExtensionDescription = max(ExtensionDescription),
+                PermissionCount      = dcount(PermissionId),
+                HighRiskPermCount    = dcountif(PermissionId, PermissionRisk in ("High","Critical")),
+                RiskyPerms           = make_set_if(PermissionName, PermissionRisk in ("High","Critical"), 15)
+      by ExtensionId;
+let Identities =
+    IdentityInfo
+    | where isnotempty(AccountUpn)
+    | summarize arg_max(Timestamp, AccountDisplayName, EmailAddress, Department, JobTitle)
+        by AccountUpnLower = tolower(AccountUpn)
+    | project-away Timestamp;
+let Devices =
+    DeviceInfo
+    | summarize arg_max(Timestamp, OSPlatform, MachineGroup) by DeviceId
+    | project-away Timestamp;
+DeviceFileEvents
+| where Timestamp > ago(4h)
+| where FileName endswith ".crx"
+| extend ExtensionId = tostring(extract("^([a-p]{32})", 1, FileName))
+| where isnotempty(ExtensionId)
+| summarize arg_min(Timestamp, *) by DeviceId, ExtensionId
+| join kind=leftanti AlreadyInstalled on DeviceId, ExtensionId
+| extend Browser = case(
+    InitiatingProcessFileName =~ "msedge.exe", "Edge",
+    InitiatingProcessFileName =~ "chrome.exe", "Chrome",
+    InitiatingProcessFileName =~ "brave.exe",  "Brave",
+    InitiatingProcessFileName)
+| extend AccountName     = InitiatingProcessAccountName,
+         AccountDomain   = InitiatingProcessAccountDomain,
+         AccountSid      = InitiatingProcessAccountSid,
+         AccountUpn      = InitiatingProcessAccountUpn,
+         AccountObjectId = InitiatingProcessAccountObjectId,
+         AccountUpnLower = tolower(InitiatingProcessAccountUpn)
+| join kind=leftouter Identities on AccountUpnLower
+| join kind=leftouter Devices    on DeviceId
+| join kind=leftouter Catalogue  on ExtensionId
+| extend ExtensionName        = coalesce(ExtensionName, "UNKNOWN - not in MDVM catalogue"),
+         ExtensionRisk        = coalesce(ExtensionRisk, "Unrated"),
+         UserDisplayName      = coalesce(AccountDisplayName, AccountName),
+         UserEmail            = coalesce(EmailAddress, AccountUpn),
+         RiskyPermissionsText = strcat_array(RiskyPerms, ", ")
+| extend StoreUrl = case(
+    Browser == "Edge",   strcat("https://microsoftedge.microsoft.com/addons/detail/", ExtensionId),
+    Browser == "Chrome", strcat("https://chromewebstore.google.com/detail/", ExtensionId),
+    "")
+| extend TriagePriority = case(
+    ExtensionName startswith "UNKNOWN",   "1 - Unknown extension, manual review",
+    ExtensionRisk in ("Critical","High"), "2 - Known high-risk extension",
+    HighRiskPermCount > 0,                "3 - Has high-risk permissions",
+    "4 - Informational")
+| project Timestamp, ReportId, DeviceId, DeviceName,
+          AccountName, AccountDomain, AccountSid, AccountUpn, AccountObjectId,
+          UserDisplayName, UserEmail, Department, JobTitle,
+          ExtensionName, ExtensionId, ExtensionRisk, ExtensionDescription,
+          Browser, PermissionCount, HighRiskPermCount, RiskyPermissionsText,
+          StoreUrl, TriagePriority,
+          OSPlatform, MachineGroup, FileName, FolderPath
