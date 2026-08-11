@@ -16,3 +16,16 @@ DeviceProcessEvents
 | project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine,
           FolderPath, InitiatingProcessFileName, InitiatingProcessAccountName, ReportId
 | sort by Timestamp desc
+
+
+________________________________________________
+to check if we are using kevy
+
+DeviceProcessEvents
+| where FolderPath has "keyv"
+    or InitiatingProcessFolderPath has "keyv"
+    or ProcessCommandLine has "keyv"
+| where FileName =~ "node.exe"
+| project Timestamp, DeviceName, AccountName, FolderPath, 
+          InitiatingProcessFolderPath, ProcessCommandLine
+| sort by Timestamp desc
