@@ -28,3 +28,45 @@ Recent
             Processes = make_set(InitiatingProcessFileName, 5)
           by DeviceId, DeviceName, InitiatingProcessAccountName, Domain
 | order by FirstSeenTimestamp desc
+
+
+_________________________________________________________
+for specific time
+
+// Custom time window vs prior 30-day baseline (before that window)
+let lookback = 30d;
+//
+// 👇 Yahan apna specific window daal (jis time ko check karna hai)
+let WindowStart = datetime(2026-08-11 09:00:00);
+let WindowEnd   = datetime(2026-08-11 10:00:00);
+//
+let TargetDeviceId = "2a5e0326e50e46b2dbddce0806edd059bff91152";
+//
+// Step 1: Baseline - is user ne WindowStart se pehle wale 30 din me kaunse domains dekhe
+let Baseline = DeviceNetworkEvents
+| where DeviceId == TargetDeviceId
+| where InitiatingProcessAccountName =~ "smadaan"
+| where Timestamp between ((WindowStart - lookback) .. WindowStart)
+| where isnotempty(RemoteUrl)
+| extend Domain = tolower(tostring(parse_url(RemoteUrl).Host))
+| summarize by Domain;
+//
+// Step 2: Recent - specific window ke andar ke hits
+let Recent = DeviceNetworkEvents
+| where DeviceId == TargetDeviceId
+| where InitiatingProcessAccountName =~ "smadaan"
+| where Timestamp between (WindowStart .. WindowEnd)
+| where isnotempty(RemoteUrl)
+| extend Domain = tolower(tostring(parse_url(RemoteUrl).Host))
+| project Timestamp, DeviceName, DeviceId, InitiatingProcessAccountName, InitiatingProcessFileName,
+          RemoteUrl, Domain, RemoteIP, RemotePort, ActionType;
+//
+// Step 3: Anti-join - sirf wahi domains jo baseline me kabhi nahi the
+Recent
+| join kind=leftanti (Baseline) on Domain
+| summarize FirstSeenTimestamp = min(Timestamp),
+            SampleUrl = any(RemoteUrl),
+            HitCount = count(),
+            Processes = make_set(InitiatingProcessFileName, 5)
+          by DeviceId, DeviceName, InitiatingProcessAccountName, Domain
+| order by FirstSeenTimestamp desc
