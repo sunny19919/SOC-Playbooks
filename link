@@ -132,3 +132,32 @@ DeviceProcessEvents
 | where ProcessCommandLine has_any (KnownMaliciousPackages)
 | project Timestamp, DeviceName, AccountName, ProcessCommandLine
 | order by Timestamp desc
+
+
+
+____________________________________________________
+
+let KnownMaliciousPackages = dynamic([
+    "keyv",
+    "@cacheable/net",
+    "@cacheable/node-cache",
+    "cache",
+    "cacheable",
+    "flat-cache",
+    "cacheable-request",
+    "@cacheable/memory",
+    "file-entry-cache",
+    "@cacheable/utils",
+    "cache-manager"
+]);
+
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where ProcessCommandLine has_any (KnownMaliciousPackages)
+| project
+    Timestamp,
+    DeviceName,
+    AccountName,
+    FileName,
+    ProcessCommandLine
+| order by Timestamp desc
