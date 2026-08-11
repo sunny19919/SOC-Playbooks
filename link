@@ -103,3 +103,30 @@ let compromisedPackages = dynamic([
     // Review the full command line for context to confirm an installation attempt.
     | project-reorder Timestamp, DeviceName, FileName, ProcessCommandLine, InitiatingProcessFileName
 )
+
+
+__________________________________________________________--
+
+
+let KnownMaliciousPackages = dynamic([
+    "keyv",
+    "cacheable",
+    "cacheable-request",
+    "cache-manager",
+    "flat-cache",
+    "file-entry-cache",
+    "rwc-client",
+    "verdaccio",
+    "picasso.js",
+    "pob",
+    "orb",
+    "umadev"
+]);
+
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where FileName in~ ("npm.exe","npm.cmd","node.exe")
+//| where ProcessCommandLine has "install"
+| where ProcessCommandLine has_any (KnownMaliciousPackages)
+| project Timestamp, DeviceName, AccountName, ProcessCommandLine
+| order by Timestamp desc
