@@ -1,0 +1,30 @@
+let lookback = 30d;
+let recentWindow = 1h;
+let nowTime = now();
+let TargetDeviceId = "2a5e0326e50e46b2dbddce0806edd059bff91152";
+//
+let Baseline = DeviceNetworkEvents
+| where DeviceId == TargetDeviceId
+| where InitiatingProcessAccountName =~ "smadaan"
+| where Timestamp between ((nowTime - lookback - recentWindow) .. (nowTime - recentWindow))
+| where isnotempty(RemoteUrl)
+| extend Domain = tolower(tostring(parse_url(RemoteUrl).Host))
+| summarize by Domain;
+//
+let Recent = DeviceNetworkEvents
+| where DeviceId == TargetDeviceId
+| where InitiatingProcessAccountName =~ "smadaan"
+| where Timestamp >= (nowTime - recentWindow)
+| where isnotempty(RemoteUrl)
+| extend Domain = tolower(tostring(parse_url(RemoteUrl).Host))
+| project Timestamp, DeviceName, DeviceId, InitiatingProcessAccountName, InitiatingProcessFileName,
+          RemoteUrl, Domain, RemoteIP, RemotePort, ActionType;
+//
+Recent
+| join kind=leftanti (Baseline) on Domain
+| summarize FirstSeenTimestamp = min(Timestamp),
+            SampleUrl = any(RemoteUrl),
+            HitCount = count(),
+            Processes = make_set(InitiatingProcessFileName, 5)
+          by DeviceId, DeviceName, InitiatingProcessAccountName, Domain
+| order by FirstSeenTimestamp desc
