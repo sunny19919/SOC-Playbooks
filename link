@@ -43,3 +43,12 @@ DeviceProcessEvents
 | project Timestamp, DeviceName, AccountName, FolderPath, 
           InitiatingProcessFolderPath, ProcessCommandLine
 | sort by Timestamp desc
+
+
+__________________________
+DeviceProcessEvents
+| where ProcessCommandLine has"flat-cache"
+| where FileName =~ "node.exe"
+| project Timestamp, DeviceName, AccountName, FolderPath, 
+          InitiatingProcessFolderPath, ProcessCommandLine
+| sort by Timestamp desc
