@@ -141,7 +141,6 @@ let KnownMaliciousPackages = dynamic([
     "keyv",
     "@cacheable/net",
     "@cacheable/node-cache",
-    "cache",
     "cacheable",
     "flat-cache",
     "cacheable-request",
@@ -153,11 +152,11 @@ let KnownMaliciousPackages = dynamic([
 
 DeviceProcessEvents
 | where Timestamp > ago(30d)
+| where FileName in~ ("npm.exe","npm.cmd","node.exe")
 | where ProcessCommandLine has_any (KnownMaliciousPackages)
-| project
-    Timestamp,
-    DeviceName,
-    AccountName,
-    FileName,
-    ProcessCommandLine
+| project Timestamp,
+          DeviceName,
+          AccountName,
+          FileName,
+          ProcessCommandLine
 | order by Timestamp desc
