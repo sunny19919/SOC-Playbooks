@@ -6,3 +6,13 @@ DeviceProcessEvents
 | where ProcessCommandLine has "keyv"
 | project Timestamp, DeviceName, AccountName, ProcessCommandLine, ReportId
 | sort by Timestamp desc
+
+
+______________
+DeviceProcessEvents
+| where FileName =~ "node.exe"
+| where ProcessCommandLine has "npm-cli.js"
+| where ProcessCommandLine has "keyv"
+| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine,
+          FolderPath, InitiatingProcessFileName, InitiatingProcessAccountName, ReportId
+| sort by Timestamp desc
