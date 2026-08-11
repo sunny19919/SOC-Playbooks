@@ -29,3 +29,8 @@ DeviceProcessEvents
 | project Timestamp, DeviceName, AccountName, FolderPath, 
           InitiatingProcessFolderPath, ProcessCommandLine
 | sort by Timestamp desc
+
+
+Affected package version 
+
+https://www.wiz.io/blog/keyv-and-cacheable-npm-supply-chain-attack
