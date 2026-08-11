@@ -34,3 +34,12 @@ DeviceProcessEvents
 Affected package version 
 
 https://www.wiz.io/blog/keyv-and-cacheable-npm-supply-chain-attack
+
+
+
+DeviceProcessEvents
+| where ProcessCommandLine has"cacheable"
+| where FileName =~ "node.exe"
+| project Timestamp, DeviceName, AccountName, FolderPath, 
+          InitiatingProcessFolderPath, ProcessCommandLine
+| sort by Timestamp desc
