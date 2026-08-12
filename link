@@ -189,3 +189,9 @@ let required_packages_and_versions = datatable(Package:string, Version:string)
     "cache-manager", "7.2.10"
 ];
 
+
+Verify the alert details and confirm the blocked file was not executed before the indicator was applied.
+Work with the system owner to remove the identified malicious package version(s) and upgrade to a trusted release.
+Review the endpoint for related Node.js, npm, or Bun activity and any additional indicators of compromise.
+Rotate potentially exposed developer credentials, tokens, and secrets if package execution is confirmed.
+
