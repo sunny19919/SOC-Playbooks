@@ -199,4 +199,31 @@ Rotate potentially exposed developer credentials, tokens, and secrets if package
 Verify whether the identified package was executed prior to blocking. Work with the system owner to remove affected package
 versions and review related Node.js, npm, or Bun activity. If package execution is confirmed, isolate the machine and 
 rotate potentially exposed developer credentials, API tokens, and secrets.
+____________________________________________________________________________________
+
+Check installation
+
+DeviceProcessEvents
+| where DeviceName contains "UK-PF50GXT7"
+| where Timestamp > ago(2h)
+| where ProcessCommandLine has_any ("bun","install.js","npm")
+or InitiatingProcessCommandLine has_any ("bun","npm")
+| project Timestamp,
+          FileName,
+          ProcessCommandLine,
+          InitiatingProcessFileName,
+          InitiatingProcessCommandLine
+| order by Timestamp desc
+
+output
+screenshot attached
+
+check Bun usage 
+
+DeviceProcessEvents
+| where Timestamp > ago(1h)
+| where DeviceName contains "UK-PF50GXT7"
+| where FileName in~ ("bun.exe","bun","bun.cmd")
+| project Timestamp, DeviceName, FileName, ProcessCommandLine
+| order by Timestamp desc
 
