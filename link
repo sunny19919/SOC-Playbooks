@@ -160,3 +160,32 @@ DeviceProcessEvents
           FileName,
           ProcessCommandLine
 | order by Timestamp desc
+
+
+
+
+
+
+
+
+
+
+
+
+
+___________________________________
+
+let required_packages_and_versions = datatable(Package:string, Version:string)
+[
+    "keyv", "6.0.0",
+    "@cacheable/net", "2.1.1",
+    "@cacheable/node-cache", "3.1.2",
+    "cacheable", "2.5.1",
+    "flat-cache", "6.1.24",
+    "cacheable-request", "13.0.20",
+    "@cacheable/memory", "2.2.1",
+    "file-entry-cache", "11.1.6",
+    "@cacheable/utils", "2.5.1",
+    "cache-manager", "7.2.10"
+];
+
