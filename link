@@ -196,7 +196,7 @@ Review the endpoint for related Node.js, npm, or Bun activity and any additional
 Rotate potentially exposed developer credentials, tokens, and secrets if package execution is confirmed.
 
 
-Verify whether the identified package was executed prior to blocking. Work with the system owner to remove affected 
-package versions and review related Node.js, npm, or Bun activity. Rotate potentially exposed developer credentials,
-API tokens, and secrets  if package execution is confirmed.
+Verify whether the identified package was executed prior to blocking. Work with the system owner to remove affected package
+versions and review related Node.js, npm, or Bun activity. If package execution is confirmed, isolate the machine and 
+rotate potentially exposed developer credentials, API tokens, and secrets.
 
