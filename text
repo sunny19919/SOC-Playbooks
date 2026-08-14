@@ -1,0 +1,9 @@
+There's an incident report from Defender Experts, along with advisories on different platforms, confirming that a threat actor group called "City-Forum" is actively exploiting misconfigured Salesforce guest user access to steal data — reported by Reco/BleepingComputer on 12 Aug 2026. 
+
+Basically In a publicly accessible Salesforce Experience site, anonymous visitors share a “guest user profile.” Typically this is used to allow an unauthenticated user access to view data that is expected to be made publicly available. However, if this profile is misconfigured with excessive permissions, data that is not intended to be made public may be accessible, allowing a threat actor to directly query Salesforce CRM objects without logging in.
+
+Salesforce itself issued an advisory on 11 March 2026 warning about the exact same issue.So we need to audit our guest user permissions urgently and review Salesforce's recommendations.
+
+I have reviewed our logs — I don't see requests from the attacker IP published in yesterday's advisory, however I can see multiple requests using the Go agent from other IPs provided by Defender experts. I will share the logs with salesforce team so they can review whats exact data has been accessed here and  will verify the recommended actions shared by Salesforce to check if we have allowed excessive permissions on these two guest accounts being seen in the logs.
+
+If they confirm any data exilteration then we can deep dive into it
