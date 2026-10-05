@@ -1,0 +1,1 @@
+These are Defender exclusion paths, meaning Defender will not scan them. I don't need a validation of whether the paths exist. Could you please review whether these exclusions are actually required and ensure we're not excluding any folders containing important business data that should remain protected and scanned by Defender?
