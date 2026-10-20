@@ -1,0 +1,6 @@
+Could you please share a screenshot of the Incident reports settings for the Crossware Exception DLP policy? I'm reviewing it to confirm whether rule matches generate alerts in Defender.
+
+Path:
+Microsoft Purview portal > Data loss prevention > Policies > Crossware Exception > Edit policy > Advanced DLP rules > edit the custom rule > Incident reports section
+
+If the policy has more than one custom rule, please share this section for each rule.
