@@ -4,3 +4,6 @@ Path:
 Microsoft Purview portal > Data loss prevention > Policies > Crossware Exception > Edit policy > Advanced DLP rules > edit the custom rule > Incident reports section
 
 If the policy has more than one custom rule, please share this section for each rule.
+
+
+https://learn.microsoft.com/en-us/purview/endpoint-dlp-create-policy-detect-pii-data-exposure
